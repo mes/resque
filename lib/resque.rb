@@ -52,6 +52,9 @@ module Resque
   # See `Resque.encode`, above, for why generate/parse are checked before dump/load.
   def decode(object)
     return unless object
+    
+    # See #7695
+    return if object == 'QUEUED'
 
     begin
       if MultiJson.respond_to?(:generate) && MultiJson.respond_to?(:parse)
