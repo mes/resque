@@ -40,6 +40,9 @@ module Resque
   # Given a string, returns a Ruby object.
   def decode(object)
     return unless object
+    
+    # See #7695
+    return if object == 'QUEUED'
 
     begin
       if MultiJson.respond_to?(:dump) && MultiJson.respond_to?(:load)
