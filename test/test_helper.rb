@@ -1,11 +1,9 @@
-require 'coveralls'
-Coveralls.wear!
-
 require 'rubygems'
 require 'bundler/setup'
 require 'minitest/autorun'
 require 'redis/namespace'
-require 'mocha/setup'
+require 'mocha/minitest'
+require 'tempfile'
 
 $dir = File.dirname(File.expand_path(__FILE__))
 $LOAD_PATH.unshift $dir + '/../lib'
@@ -35,7 +33,7 @@ end
 # kill it when they end
 #
 
-MiniTest::Unit.after_tests do
+MiniTest.after_run do
   if Process.pid == $TEST_PID
     processes = `ps -A -o pid,command | grep [r]edis-test`.split("\n")
     pids = processes.map { |process| process.split(" ")[0] }
@@ -45,19 +43,24 @@ MiniTest::Unit.after_tests do
   end
 end
 
-module MiniTest::Unit::LifecycleHooks
-  def before_setup
+class GlobalSpecHooks < MiniTest::Spec
+  def setup
+    super
     reset_logger
-    Resque.redis.flushall
+    Resque.redis.redis.flushall
     Resque.before_first_fork = nil
     Resque.before_fork = nil
     Resque.after_fork = nil
   end
 
-  def after_teardown
+  def teardown
+    super
     Resque::Worker.kill_all_heartbeat_threads
   end
+
+  register_spec_type(/.*/, self)
 end
+
 
 if ENV.key? 'RESQUE_DISTRIBUTED'
   require 'redis/distributed'

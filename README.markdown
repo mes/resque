@@ -3,7 +3,6 @@ Resque
 
 [![Gem Version](https://badge.fury.io/rb/resque.svg)](https://rubygems.org/gems/resque)
 [![Build Status](https://travis-ci.org/resque/resque.svg)](https://travis-ci.org/resque/resque)
-[![Coverage Status](https://coveralls.io/repos/github/resque/resque/badge.svg?branch=1-x-stable)](https://coveralls.io/r/resque/resque?branch=1-x-stable)
 
 Resque (pronounced like "rescue") is a Redis-backed library for creating
 background jobs, placing those jobs on multiple queues, and processing
@@ -34,8 +33,8 @@ The Resque frontend tells you what workers are doing, what workers are
 not doing, what queues you're using, what's in those queues, provides
 general usage stats, and helps you track failures.
 
-Resque now supports Ruby 2.0.0 and above. Any future updates will not be
-guaranteed to work without defects on any Rubies older than 2.0.0. We will also only be supporting Redis 3.0 and above going forward.
+Resque now supports Ruby 2.3.0 and above.
+We will also only be supporting Redis 3.0 and above going forward.
 
 
 The Blog Post
@@ -199,7 +198,7 @@ We plan to provide first class `async` support in a future release.
 If a job raises an exception, it is logged and handed off to the
 `Resque::Failure` module. Failures are logged either locally in Redis
 or using some different backend. To see exceptions while developing,
-use VERBOSE env variable, see details below under Logging.
+see details below under Logging.
 
 For example, Resque ships with Airbrake support. To configure it, put
 the following into an initialisation file or into your rake job:
@@ -284,6 +283,33 @@ If you want Resque to log to a file, in Rails do:
 ```ruby
 # config/initializers/resque.rb
 Resque.logger = Logger.new(Rails.root.join('log', "#{Rails.env}_resque.log"))
+```
+
+### Storing Statistics
+ Resque allows to store count of processed and failed jobs.
+
+ By default it will store it in Redis using the keys `stats:processed` and `stats:failed`.
+
+ Some apps would want another stats store, or even a null store:
+
+ ```ruby
+# config/initializers/resque.rb
+class NullDataStore
+  def stat(stat)
+    0
+  end
+
+  def increment_stat(stat, by)
+  end
+
+  def decrement_stat(stat, by)
+  end
+
+  def clear_stat(stat)
+  end
+end
+
+Resque.stat_data_store = NullDataStore.new
 ```
 
 ### Process IDs (PIDs)
@@ -464,7 +490,7 @@ solution is to give a small amount of time for the job to finish
 before killing it.
 
 Resque doesn't handle this out of the box (for both cedar-14 and heroku-16), you need to
-install the [`resque-heroku-signals`](https://github.com/iloveitaly/resque-heroku-signals) 
+install the [`resque-heroku-signals`](https://github.com/iloveitaly/resque-heroku-signals)
 addon which adds the required signal handling to make the behavior described above work.
 Related issue: https://github.com/resque/resque/issues/1559
 
@@ -514,18 +540,6 @@ From the Rails docs on [`clear_active_connections!`](http://api.rubyonrails.org/
 
     Returns any connections in use by the current thread back to the pool, and also returns connections to the pool cached by threads that are no longer alive.
 
-
-#### ActiveJob
-
-If you're going to need to use the database in a number of different jobs, consider adding this to your ApplicationJob file:
-
-``` ruby
-class ApplicationJob < ActiveJob::Base
-  before_perform do |job|
-    ActiveRecord::Base.clear_active_connections!
-  end
-end
-```
 
 
 The Front End
@@ -792,15 +806,16 @@ Here's our `config/resque.yml`:
     test: localhost:6379
     staging: redis1.se.github.com:6379
     fi: localhost:6379
-    production: redis1.ae.github.com:6379
+    production: <%= ENV['REDIS_URL'] %>
 
 And our initializer:
 
 ``` ruby
 rails_root = ENV['RAILS_ROOT'] || File.dirname(__FILE__) + '/../..'
 rails_env = ENV['RAILS_ENV'] || 'development'
+config_file = rails_root + '/config/resque.yml'
 
-resque_config = YAML.load_file(rails_root + '/config/resque.yml')
+resque_config = YAML::load(ERB.new(IO.read(config_file)).result)
 Resque.redis = resque_config[rails_env]
 ```
 
@@ -823,7 +838,7 @@ Plugins and Hooks
 -----------------
 
 For a list of available plugins see
-<http://wiki.github.com/resque/resque/plugins>.
+<https://github.com/resque/resque/wiki/plugins>.
 
 If you'd like to write your own plugin, or want to customize Resque
 using hooks (such as `Resque.after_fork`), see

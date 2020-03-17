@@ -5,7 +5,7 @@ require 'resque/version'
 require 'time'
 require 'yaml'
 
-if defined? Encoding
+if defined?(Encoding) && Encoding.default_external != Encoding::UTF_8
   Encoding.default_external = Encoding::UTF_8
 end
 
@@ -41,10 +41,6 @@ module Resque
         [ url_prefix, path_prefix, path_parts ].join("/").squeeze('/')
       end
       alias_method :u, :url_path
-
-      def redirect_url_path(*path_parts)
-        [ path_prefix, path_parts ].join("/").squeeze('/')
-      end
 
       def path_prefix
         request.env['SCRIPT_NAME']
@@ -133,7 +129,7 @@ module Resque
       end
 
       def poll
-        if @polling
+        if defined?(@polling) && @polling
           text = "Last Updated: #{Time.now.strftime("%H:%M:%S")}"
         else
           text = "<a href='#{u(request.path_info)}.poll' rel='poll'>Live Poll</a>"
@@ -160,7 +156,7 @@ module Resque
 
     # to make things easier on ourselves
     get "/?" do
-      redirect redirect_url_path(:overview)
+      redirect url_path(:overview)
     end
 
     %w( overview workers ).each do |page|
@@ -221,7 +217,7 @@ module Resque
 
     post "/failed/:queue/requeue/all" do
       Resque::Failure.requeue_queue Resque::Failure.job_queue_name(params[:queue])
-      redirect redirect_url_path("/failed/#{params[:queue]}")
+      redirect url_path("/failed/#{params[:queue]}")
     end
 
     get "/failed/requeue/:index/?" do
@@ -253,7 +249,7 @@ module Resque
     end
 
     get "/stats/?" do
-      redirect redirect_url_path("/stats/resque")
+      redirect url_path("/stats/resque")
     end
 
     get "/stats/:id/?" do

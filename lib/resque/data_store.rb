@@ -49,10 +49,15 @@ module Resque
                               :worker_start_time,
                               :worker_done_working
 
-      def_delegators :@stats_access, :clear_stat,
-                                     :decremet_stat,
-                                     :increment_stat,
-                                     :stat
+    def_delegators :@stats_access, :clear_stat,
+                                   :decrement_stat,
+                                   :increment_stat,
+                                   :stat
+
+    def decremet_stat(*args)
+      warn '[Resque] [Deprecation] Resque::DataStore #decremet_stat method is deprecated (please use #decrement_stat)'
+      decrement_stat(*args)
+    end
 
     # Compatibility with any non-Resque classes that were using Resque.redis as a way to access Redis
     def method_missing(sym,*args,&block)
@@ -68,19 +73,12 @@ module Resque
     # Get a string identifying the underlying server.
     # Probably should be private, but was public so must stay public
     def identifier
-      # support 1.x versions of redis-rb
-      if @redis.respond_to?(:server)
-        @redis.server
-      elsif @redis.respond_to?(:nodes) # distributed
-        @redis.nodes.map { |n| n.id }.join(', ')
-      else
-        @redis.client.id
-      end
+      @redis.inspect
     end
 
     # Force a reconnect to Redis.
     def reconnect
-      @redis.client.reconnect
+      @redis._client.reconnect
     end
 
     # Returns an array of all known Resque keys in Redis. Redis' KEYS operation

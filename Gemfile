@@ -2,14 +2,11 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "activesupport", "~> 3.0"
-gem "i18n"
-
 gem "json"
-gem "coveralls", :require => false
 
-gem "minitest", "4.7.0"
-gem "mocha", :require => false
+gem "minitest", "~> 5.11"
+gem "mocha", "~> 1.11", require: false
 gem "rack-test", "~> 0.5"
 gem "rake"
+gem "rubocop", "~> 0.80"
 gem "pry"
