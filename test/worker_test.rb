@@ -415,7 +415,9 @@ describe "Resque::Worker" do
   end
 
   it "has a unique id" do
-    assert_equal "#{`hostname`.chomp}:#{$$}:jobs", @worker.to_s
+    SecureRandom.stub(:hex, 'someRandomHash') do
+      assert_equal "#{`hostname`.chomp}:#{$$}:someRandomHash:jobs", @worker.to_s
+    end
   end
 
   it "complains if no queues are given" do
