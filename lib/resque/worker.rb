@@ -815,7 +815,7 @@ module Resque
       @pid ||= Process.pid
     end
 
-    # Returns Random uuid
+    # Returns random hash identifying this worker instance
     def uuid
       @uuid ||= SecureRandom.hex.to_s
     end
