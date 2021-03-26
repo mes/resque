@@ -649,7 +649,7 @@ describe "Resque::Worker" do
     now = Time.now
 
     workerA = Resque::Worker.new(:jobs)
-    workerA.to_s = "bar:3:jobs"
+    workerA.to_s = "bar:3:HASH2719123:jobs"
     workerA.register_worker
     workerA.heartbeat!(now - Resque.prune_interval - 1)
 
@@ -657,7 +657,7 @@ describe "Resque::Worker" do
     assert Resque::Worker.all_heartbeats.key?(workerA.to_s)
 
     workerB = Resque::Worker.new(:jobs)
-    workerB.to_s = "foo:5:jobs"
+    workerB.to_s = "foo:5:HASH2719123:jobs"
     workerB.register_worker
     workerB.heartbeat!(now)
 
@@ -676,14 +676,14 @@ describe "Resque::Worker" do
   it "does not prune if another worker has pruned (started pruning) recently" do
     now = Time.now
     workerA = Resque::Worker.new(:jobs)
-    workerA.to_s = 'workerA:1:jobs'
+    workerA.to_s = 'workerA:1:HASH2719123:jobs'
     workerA.register_worker
     workerA.heartbeat!(now - Resque.prune_interval - 1)
     assert_equal 1, Resque.workers.size
     assert_equal [workerA], Resque::Worker.all_workers_with_expired_heartbeats
 
     workerB = Resque::Worker.new(:jobs)
-    workerB.to_s = 'workerB:1:jobs'
+    workerB.to_s = 'workerB:1:HASH2719123:jobs'
     workerB.register_worker
     workerB.heartbeat!(now)
     assert_equal 2, Resque.workers.size
@@ -692,14 +692,14 @@ describe "Resque::Worker" do
     assert_equal [], Resque::Worker.all_workers_with_expired_heartbeats
 
     workerC = Resque::Worker.new(:jobs)
-    workerC.to_s = "workerC:1:jobs"
+    workerC.to_s = "workerC:1:HASH2719123:jobs"
     workerC.register_worker
     workerC.heartbeat!(now - Resque.prune_interval - 1)
     assert_equal 2, Resque.workers.size
     assert_equal [workerC], Resque::Worker.all_workers_with_expired_heartbeats
 
     workerD = Resque::Worker.new(:jobs)
-    workerD.to_s = 'workerD:1:jobs'
+    workerD.to_s = 'workerD:1:HASH2719123:jobs'
     workerD.register_worker
     workerD.heartbeat!(now)
     assert_equal 3, Resque.workers.size
@@ -711,7 +711,7 @@ describe "Resque::Worker" do
 
   it "does not prune workers that haven't set a heartbeat" do
     workerA = Resque::Worker.new(:jobs)
-    workerA.to_s = "bar:3:jobs"
+    workerA.to_s = "bar:3:HASH2719123:jobs"
     workerA.register_worker
 
     assert_equal 1, Resque.workers.size
@@ -780,7 +780,7 @@ describe "Resque::Worker" do
 
   it "correctly reports a job that the pruned worker was processing" do
     workerA = Resque::Worker.new(:jobs)
-    workerA.to_s = "jobs01.company.com:3:jobs"
+    workerA.to_s = "jobs01.company.com:3:HASH2719123:jobs"
     workerA.register_worker
 
     job = Resque::Job.new(:jobs, {'class' => 'GoodJob', 'args' => "blah"})
@@ -792,14 +792,14 @@ describe "Resque::Worker" do
     assert_equal 1, Resque::Failure.count
     failure = Resque::Failure.all(0)
     assert_equal "Resque::PruneDeadWorkerDirtyExit", failure["exception"]
-    assert_equal "Worker jobs01.company.com:3:jobs did not gracefully exit while processing GoodJob", failure["error"]
+    assert_equal "Worker jobs01.company.com:3:HASH2719123:jobs did not gracefully exit while processing GoodJob", failure["error"]
   end
 
   # This was added because PruneDeadWorkerDirtyExit does not have a backtrace,
   # and the error handling code did not account for that.
   it "correctly reports errors that occur while pruning workers" do
     workerA = Resque::Worker.new(:jobs)
-    workerA.to_s = "bar:3:jobs"
+    workerA.to_s = "bar:3:HASH2719123:jobs"
     workerA.register_worker
     workerA.heartbeat!(Time.now - Resque.prune_interval - 1)
 
@@ -811,7 +811,7 @@ describe "Resque::Worker" do
     end
 
     assert_match(/PruneDeadWorkerDirtyExit/, exception_caught.message)
-    assert_match(/bar:3:jobs/, exception_caught.message)
+    assert_match(/bar:3:HASH2719123:jobs/, exception_caught.message)
     assert_match(/Redis::CannotConnectError/, exception_caught.message)
   end
 
@@ -819,25 +819,25 @@ describe "Resque::Worker" do
     # first we fake out several dead workers
     # 1: matches queue and hostname; gets pruned.
     workerA = Resque::Worker.new(:jobs)
-    workerA.instance_variable_set(:@to_s, "#{`hostname`.chomp}:1:jobs")
+    workerA.instance_variable_set(:@to_s, "#{`hostname`.chomp}:1:HASH2719123:jobs")
     workerA.register_worker
     workerA.heartbeat!
 
     # 2. matches queue but not hostname; no prune.
     workerB = Resque::Worker.new(:jobs)
-    workerB.instance_variable_set(:@to_s, "#{`hostname`.chomp}-foo:2:jobs")
+    workerB.instance_variable_set(:@to_s, "#{`hostname`.chomp}-foo:2:HASH2719123:jobs")
     workerB.register_worker
     workerB.heartbeat!
 
     # 3. matches hostname but not queue; no prune.
     workerB = Resque::Worker.new(:high)
-    workerB.instance_variable_set(:@to_s, "#{`hostname`.chomp}:3:high")
+    workerB.instance_variable_set(:@to_s, "#{`hostname`.chomp}:3:HASH2719123:high")
     workerB.register_worker
     workerB.heartbeat!
 
     # 4. matches neither hostname nor queue; no prune.
     workerB = Resque::Worker.new(:high)
-    workerB.instance_variable_set(:@to_s, "#{`hostname`.chomp}-foo:4:high")
+    workerB.instance_variable_set(:@to_s, "#{`hostname`.chomp}-foo:4:HASH2719123:high")
     workerB.register_worker
     workerB.heartbeat!
 
@@ -851,12 +851,12 @@ describe "Resque::Worker" do
     assert_equal 3, Resque.workers.size
 
     # pruned
-    assert !worker_strings.include?("#{`hostname`.chomp}:1:jobs")
+    assert !worker_strings.include?("#{`hostname`.chomp}:1:HASH2719123:jobs")
 
     # not pruned
-    assert worker_strings.include?("#{`hostname`.chomp}-foo:2:jobs")
-    assert worker_strings.include?("#{`hostname`.chomp}:3:high")
-    assert worker_strings.include?("#{`hostname`.chomp}-foo:4:high")
+    assert worker_strings.include?("#{`hostname`.chomp}-foo:2:HASH2719123:jobs")
+    assert worker_strings.include?("#{`hostname`.chomp}:3:HASH2719123:high")
+    assert worker_strings.include?("#{`hostname`.chomp}-foo:4:HASH2719123:high")
   end
 
   it "worker_pids returns pids" do

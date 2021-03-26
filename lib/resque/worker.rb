@@ -103,7 +103,7 @@ module Resque
       skip_exists = options[:skip_exists]
 
       if skip_exists || exists?(worker_id)
-        host, pid, queues_raw = worker_id.split(':')
+        host, pid, uuid, queues_raw = worker_id.split(':')
         queues = queues_raw.split(',')
         worker = new(*queues)
         worker.hostname = host
@@ -621,7 +621,7 @@ module Resque
           next
         end
 
-        host, pid, worker_queues_raw = worker.id.split(':')
+        host, pid, uuid, worker_queues_raw = worker.id.split(':')
         worker_queues = worker_queues_raw.split(",")
         unless @queues.include?("*") || (worker_queues.to_set == @queues.to_set)
           # If the worker we are trying to prune does not belong to the queues
