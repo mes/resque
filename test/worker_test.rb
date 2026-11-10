@@ -849,7 +849,7 @@ describe "Resque::Worker" do
     now = Time.now
 
     workerA = Resque::Worker.new(:jobs)
-    workerA.to_s = "bar:3:jobs"
+    workerA.to_s = "bar:3:HASH2719123:jobs"
     workerA.heartbeat!(now - Resque.prune_interval - 1)
 
     assert_equal 0, Resque.workers.size
