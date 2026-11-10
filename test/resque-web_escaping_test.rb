@@ -61,7 +61,7 @@ describe "Resque web escaping" do
     before do
       @worker = Resque::Worker.new(PAYLOAD)
       @worker.hostname = PAYLOAD
-      @worker.to_s = "#{PAYLOAD}:1:#{PAYLOAD}"
+      @worker.to_s = "#{PAYLOAD}:1:HASH2719123:#{PAYLOAD}"
       Resque.data_store.register_worker(@worker)
     end
 
